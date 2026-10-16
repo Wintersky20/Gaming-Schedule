@@ -1,0 +1,587 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Gaming Post Schedule</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  /* Layout concept: a collapsible world-clock panel on top, then one day at a time with three platforms and three notes each. */
+  :root {
+    --bg: #ECEFF3;
+    --surface: #FFFFFF;
+    --ink: #12161C;
+    --muted: #586272;
+    --line: #D8DDE5;
+    --tint: #F3F5F8;
+    --tt: #00998C;
+    --ig: #CC2C66;
+    --yt: #D92A25;
+    --peak-bg: #14804F;   --peak-fg: #FFFFFF;
+    --active-bg: #C4E8D5; --active-fg: #0F3D2A;
+    --low-bg: #F2E2B2;    --low-fg: #4A3A0B;
+    --asleep-bg: #DDE2E9; --asleep-fg: #586272;
+    --font-display: "Chakra Petch", "Trebuchet MS", system-ui, sans-serif;
+    --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1218; --surface: #161B23; --ink: #E9EDF3; --muted: #9AA5B5; --line: #28303B; --tint: #1B222C;
+      --tt: #2DD4C4; --ig: #FF6B9C; --yt: #FF5B54;
+      --peak-bg: #2FBF85;   --peak-fg: #06231A;
+      --active-bg: #1B4636; --active-fg: #BFEBD6;
+      --low-bg: #4A3F1C;    --low-fg: #F0DFA6;
+      --asleep-bg: #232B36; --asleep-fg: #8C97A8;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1218; --surface: #161B23; --ink: #E9EDF3; --muted: #9AA5B5; --line: #28303B; --tint: #1B222C;
+    --tt: #2DD4C4; --ig: #FF6B9C; --yt: #FF5B54;
+    --peak-bg: #2FBF85;   --peak-fg: #06231A;
+    --active-bg: #1B4636; --active-fg: #BFEBD6;
+    --low-bg: #4A3F1C;    --low-fg: #F0DFA6;
+    --asleep-bg: #232B36; --asleep-fg: #8C97A8;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-block: 26px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; text-wrap: balance; line-height: 1.15; }
+  p { margin: 0; }
+  section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  button { font-family: inherit; }
+  button:focus-visible, textarea:focus-visible, .cells:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  header { display: flex; flex-direction: column; gap: 8px; }
+  h1 { font-size: clamp(2rem, 7vw, 3.1rem); font-weight: 700; letter-spacing: -0.01em; }
+  .lede { max-width: 60ch; color: var(--muted); font-size: 1.02rem; }
+
+  /* status colours */
+  .s-peak { background: var(--peak-bg); color: var(--peak-fg); }
+  .s-active { background: var(--active-bg); color: var(--active-fg); }
+  .s-low { background: var(--low-bg); color: var(--low-fg); }
+  .s-asleep { background: var(--asleep-bg); color: var(--asleep-fg); }
+
+  /* activity panel */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .panel-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 10px 12px 10px 16px; }
+  .panel-bar h2 { font-size: 1.1rem; font-weight: 700; }
+  .minis { display: flex; flex-wrap: wrap; gap: 4px; }
+  .mini { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600; padding: 3px 7px; border-radius: 4px; white-space: nowrap; }
+  .btn { margin-left: auto; font: 500 0.9rem var(--font-body); color: var(--ink); background: var(--tint); border: 1px solid var(--line); border-radius: 6px; padding: 7px 16px; min-height: 40px; cursor: pointer; }
+  .panel-body { padding: 2px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .ro-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+  .ro-head b { font-family: var(--font-display); font-size: 1.55rem; font-variant-numeric: tabular-nums; }
+  .ro-head span { color: var(--muted); font-size: 0.88rem; }
+  .ro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; }
+  .rc { border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .rc .rl { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .rc b { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .rc .rs { font-size: 0.8rem; font-weight: 600; }
+
+  .mapwrap { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: start; }
+  .labs { display: flex; flex-direction: column; gap: 3px; }
+  .labs div { height: 22px; display: flex; align-items: center; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .cells { position: relative; display: flex; flex-direction: column; gap: 3px; touch-action: pan-y; cursor: ew-resize; border-radius: 4px; }
+  .strip { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 1px; }
+  .c { display: block; height: 22px; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+  .c.mk { background: none; }
+  .c.mk b { width: 8px; height: 8px; border-radius: 50%; display: block; }
+  .dot-tt { background: var(--tt); } .dot-ig { background: var(--ig); } .dot-yt { background: var(--yt); }
+  .selbox { position: absolute; top: -2px; bottom: -2px; left: calc(var(--sel, 0) * 100% / 24); width: calc(100% / 24); border: 2px solid var(--ink); border-radius: 4px; pointer-events: none; }
+  .axis { display: grid; grid-template-columns: repeat(4, 1fr); margin-left: 52px; font-family: var(--font-mono); font-size: 0.64rem; color: var(--muted); letter-spacing: 0.04em; margin-top: -6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.8rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .legend .pd { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* schedule */
+  .sched-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; }
+  .sched-head h2 { font-size: 1.5rem; font-weight: 700; }
+  .sync { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .tabs { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .tab { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 2px; min-height: 66px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; cursor: pointer; }
+  .tab .tn { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; }
+  .tab .td, .tab .tc { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tab.today { border-bottom: 3px solid var(--ink); }
+  .tab[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .tab[aria-pressed="true"] .td, .tab[aria-pressed="true"] .tc { color: var(--bg); opacity: 0.8; }
+
+  .day-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+  .day-head h3 { font-size: 1.7rem; font-weight: 700; }
+  .date { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+  .tag { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; background: var(--ink); color: var(--bg); padding: 3px 8px; border-radius: 4px; }
+  .hint { color: var(--muted); font-size: 0.88rem; }
+  .plats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; align-items: start; }
+  .plat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 2px; min-width: 0; }
+  .plat-h { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; }
+  .plat-h i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .plat.tt .plat-h i { background: var(--tt); } .plat.ig .plat-h i { background: var(--ig); } .plat.yt .plat-h i { background: var(--yt); }
+  .plat-h h4 { font-size: 1.2rem; font-weight: 700; }
+  .pc { margin-left: auto; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .pr { padding: 12px 0 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 9px; }
+  .pr-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+  .pr-time { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .pr-time small { display: block; font-family: var(--font-mono); font-weight: 500; font-size: 0.66rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 3px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; padding: 3px 7px; border-radius: 4px; white-space: nowrap; }
+  textarea { width: 100%; min-height: 56px; resize: vertical; font: 400 0.98rem/1.4 var(--font-body); color: var(--ink); background: var(--tint); border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; }
+  textarea::placeholder { color: var(--muted); }
+  .foot { color: var(--muted); font-size: 0.82rem; max-width: 66ch; }
+
+  /* Twitch top 10 window */
+  .tw-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .tw-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .tw-item { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 6px 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); }
+  .tw-rank { font-family: var(--font-display); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tw-name { font-weight: 600; overflow-wrap: anywhere; }
+  .tw-v { font-family: var(--font-mono); font-weight: 600; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .tw-bar { grid-column: 2 / -1; height: 6px; border-radius: 3px; background: var(--tint); }
+  .tw-bar i { display: block; height: 100%; border-radius: 3px; background: var(--ink); }
+  .tw-best { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; line-height: 1.2; }
+  .tw-best:empty { display: none; }
+  .tw-links { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; color: var(--muted); }
+  .tw-links a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Three posts per platform, every day · Romania time</div>
+    <h1>Gaming Post Schedule</h1>
+    <p class="lede">Pick a day, then write under each post which video goes out. The colored tags show whether viewers in the UK and US are awake at that time.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="panel-h">
+    <div class="panel-bar">
+      <h2 id="panel-h">Time zone activity</h2>
+      <div class="minis" id="minis" aria-live="polite"></div>
+      <button type="button" class="btn" id="panel-toggle" aria-expanded="true" aria-controls="panel-body">Hide</button>
+    </div>
+    <div class="panel-body" id="panel-body">
+      <div>
+        <div class="ro-head"><b id="ro-time">--</b><span>Romania time. Drag across the map to check another hour.</span></div>
+      </div>
+      <div class="ro-grid" id="ro-grid"></div>
+      <div class="mapwrap">
+        <div class="labs"><div>RO</div><div>UK</div><div>US E</div><div>US W</div><div>Posts</div></div>
+        <div class="cells" id="cells" tabindex="0" role="slider" aria-label="Romania hour" aria-valuemin="0" aria-valuemax="23" aria-valuenow="0">
+          <div class="selbox" id="selbox"></div>
+        </div>
+      </div>
+      <div class="axis" aria-hidden="true"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+      <div class="legend" aria-label="Legend">
+        <span><i class="s-peak"></i>Peak 6-11 PM</span>
+        <span><i class="s-active"></i>Active 11 AM-6 PM</span>
+        <span><i class="s-low"></i>Low 7-11 AM, 11 PM-1 AM</span>
+        <span><i class="s-asleep"></i>Asleep 1-7 AM</span>
+        <span><i class="pd dot-tt"></i>TikTok <i class="pd dot-ig"></i>Instagram <i class="pd dot-yt"></i>YouTube</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="tw-h">
+    <div class="panel-bar">
+      <h2 id="tw-h">Top 10 games on Twitch</h2>
+      <button type="button" class="btn" id="tw-toggle" aria-expanded="false" aria-controls="tw-body">Show</button>
+    </div>
+    <div class="panel-body" id="tw-body" hidden>
+      <div class="tw-best" id="tw-best" aria-live="polite"></div>
+      <div class="tw-meta">
+        <span id="tw-stamp" aria-live="polite">Loading...</span>
+        <button type="button" class="btn" id="tw-refresh">Refresh</button>
+      </div>
+      <ol class="tw-list" id="tw-list"></ol>
+      <div class="tw-links"><span>Check right now:</span>
+        <a href="https://twitchtracker.com/games/live" target="_blank" rel="noopener noreferrer">TwitchTracker</a>
+        <a href="https://twitchviews.com/games/language/all" target="_blank" rel="noopener noreferrer">TwitchViews</a>
+        <a href="https://www.twitch.tv/directory?sort=VIEWER_COUNT" target="_blank" rel="noopener noreferrer">Twitch</a>
+      </div>
+      <p class="hint">Live viewers per game, rounded. Non-game categories such as Just Chatting are left out. The list changes when Claude pulls new numbers, so ask in chat for the latest.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="sched-h">
+    <div class="sched-head">
+      <h2 id="sched-h">Schedule</h2>
+      <span class="sync" id="sync" aria-live="polite"></span>
+    </div>
+    <div class="tabs" id="tabs" role="group" aria-label="Day of the week"></div>
+    <div id="day" style="display:flex;flex-direction:column;gap:14px"></div>
+    <p class="hint">Posts at 12:00 AM and 1:00 AM go out after midnight, in the night after the day shown. Schedule them ahead in each app.</p>
+  </section>
+
+  <p class="foot">Tags read as the local hour for viewers: UK, US East (US E) and US West (US W). Activity levels follow general gaming audience patterns, not your own analytics. Romania changes its clocks on 25 October and the US on 1 November, so the tags adjust by themselves.</p>
+</div>
+
+<script>
+(function () {
+  var RO = 'Europe/Bucharest';
+  var REG = [
+    { k: 'ro', label: 'Romania', short: 'RO', zone: RO },
+    { k: 'uk', label: 'UK', short: 'UK', zone: 'Europe/London' },
+    { k: 'ue', label: 'US East', short: 'US E', zone: 'America/New_York' },
+    { k: 'uw', label: 'US West', short: 'US W', zone: 'America/Los_Angeles' }
+  ];
+  var PLATS = [
+    { k: 'tt', name: 'TikTok', posts: [18, 21, 1] },
+    { k: 'ig', name: 'Instagram', posts: [17, 20, 0] },
+    { k: 'yt', name: 'YouTube', posts: [16, 19, 23] }
+  ];
+  var DAYS = [
+    { id: 'mon', name: 'Monday', short: 'Mon' }, { id: 'tue', name: 'Tuesday', short: 'Tue' },
+    { id: 'wed', name: 'Wednesday', short: 'Wed' }, { id: 'thu', name: 'Thursday', short: 'Thu' },
+    { id: 'fri', name: 'Friday', short: 'Fri' }, { id: 'sat', name: 'Saturday', short: 'Sat' },
+    { id: 'sun', name: 'Sunday', short: 'Sun' }
+  ];
+  var WK = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function el(id) { return document.getElementById(id); }
+  function parts(ts, zone) {
+    var f = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', weekday: 'short' });
+    var o = {};
+    f.formatToParts(new Date(ts)).forEach(function (p) { o[p.type] = p.value; });
+    return o;
+  }
+  function offset(ts, zone) {
+    var p = parts(ts, zone);
+    return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ts / 1000) * 1000;
+  }
+  function zonedToUtc(y, m, d, h, mi, zone) {
+    var guess = Date.UTC(y, m - 1, d, h, mi);
+    var ts = guess - offset(guess, zone);
+    return guess - offset(ts, zone);
+  }
+  function fmtTime(ts, zone) { return new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit' }).format(ts); }
+  function fmtHour(ts, zone) { return new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric' }).format(ts); }
+  function localHour(ts, zone) { return +parts(ts, zone).hour; }
+  function status(h) {
+    if (h >= 18 && h < 23) return { c: 'peak', t: 'Peak' };
+    if (h >= 11 && h < 18) return { c: 'active', t: 'Active' };
+    if ((h >= 7 && h < 11) || h >= 23 || h < 1) return { c: 'low', t: 'Low' };
+    return { c: 'asleep', t: 'Asleep' };
+  }
+
+  var now = parts(Date.now(), RO);
+  var Y = +now.year, M = +now.month, D = +now.day;
+  var todayIdx = Math.max(0, WK.indexOf(now.weekday));
+  var mondayMs = Date.UTC(Y, M - 1, D) - todayIdx * 864e5;
+  function dayDate(i) { return new Date(mondayMs + i * 864e5); }
+  function romTs(h) { return zonedToUtc(Y, M, D, h, 0, RO); }
+
+  var STAT = REG.map(function (r) {
+    var a = [];
+    for (var h = 0; h < 24; h++) a.push(status(localHour(romTs(h), r.zone)));
+    return a;
+  });
+  var POSTAT = {};
+  PLATS.forEach(function (p) { p.posts.forEach(function (h) { POSTAT[h] = p.k; }); });
+
+  var sel = +now.hour;
+  var selDay = todayIdx;
+  var notes = {};
+
+  /* ---------- activity panel ---------- */
+  var cells = el('cells');
+  (function buildStrips() {
+    var html = '';
+    REG.forEach(function (r, ri) {
+      html += '<div class="strip">';
+      for (var h = 0; h < 24; h++) html += '<i class="c s-' + STAT[ri][h].c + '"></i>';
+      html += '</div>';
+    });
+    html += '<div class="strip">';
+    for (var h = 0; h < 24; h++) html += '<i class="c mk">' + (POSTAT[h] ? '<b class="dot-' + POSTAT[h] + '"></b>' : '') + '</i>';
+    html += '</div>';
+    cells.insertAdjacentHTML('afterbegin', html);
+  })();
+
+  function setSel(h) {
+    sel = Math.max(0, Math.min(23, h));
+    var ts = romTs(sel);
+    el('ro-time').textContent = fmtTime(ts, RO);
+    cells.style.setProperty('--sel', sel);
+    cells.setAttribute('aria-valuenow', sel);
+    cells.setAttribute('aria-valuetext', fmtTime(ts, RO) + ' Romania time');
+    el('ro-grid').innerHTML = REG.map(function (r, ri) {
+      var st = STAT[ri][sel];
+      return '<div class="rc s-' + st.c + '"><span class="rl">' + r.label + '</span><b>' + fmtTime(ts, r.zone) + '</b><span class="rs">' + st.t + '</span></div>';
+    }).join('');
+    el('minis').innerHTML = '<span class="mini s-low" style="background:none;color:var(--muted);padding-left:0">' + fmtTime(ts, RO) + ' RO</span>' +
+      REG.slice(1).map(function (r, i) {
+        var st = STAT[i + 1][sel];
+        return '<span class="mini s-' + st.c + '">' + r.short + ' ' + st.t + '</span>';
+      }).join('');
+  }
+  function colFromEvent(e) {
+    var r = cells.getBoundingClientRect();
+    return Math.floor(((e.clientX - r.left) / r.width) * 24);
+  }
+  var dragging = false;
+  cells.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    try { cells.setPointerCapture(e.pointerId); } catch (x) {}
+    setSel(colFromEvent(e));
+  });
+  cells.addEventListener('pointermove', function (e) { if (dragging) setSel(colFromEvent(e)); });
+  ['pointerup', 'pointercancel'].forEach(function (ev) { cells.addEventListener(ev, function () { dragging = false; }); });
+  cells.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { setSel(sel + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { setSel(sel - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { setSel(0); e.preventDefault(); }
+    else if (e.key === 'End') { setSel(23); e.preventDefault(); }
+  });
+
+  var open = true;
+  try { if (localStorage.getItem('gps-panel') === 'hidden') open = false; } catch (x) {}
+  function setOpen(v, remember) {
+    open = v;
+    el('panel-body').hidden = !v;
+    el('minis').hidden = v;
+    var b = el('panel-toggle');
+    b.textContent = v ? 'Hide' : 'Show';
+    b.setAttribute('aria-expanded', v ? 'true' : 'false');
+    if (remember) { try { localStorage.setItem('gps-panel', v ? 'open' : 'hidden'); } catch (x) {} }
+  }
+  el('panel-toggle').addEventListener('click', function () { setOpen(!open, true); });
+  setOpen(open, false);
+  setSel(sel);
+
+  /* ---------- schedule ---------- */
+  function keyOf(i, p, n) { return DAYS[i].id + '-' + p + '-' + n; }
+  function filled(key) { return !!(notes[key] && notes[key].trim()); }
+  function countDay(i) {
+    var c = 0;
+    PLATS.forEach(function (p) { for (var n = 1; n <= 3; n++) if (filled(keyOf(i, p.k, n))) c++; });
+    return c;
+  }
+  function renderTabs() {
+    el('tabs').innerHTML = DAYS.map(function (d, i) {
+      var dt = dayDate(i);
+      return '<button type="button" class="tab' + (i === todayIdx ? ' today' : '') + '" data-i="' + i + '" aria-pressed="' + (i === selDay) + '">' +
+        '<span class="tn">' + d.short + '</span><span class="td">' + dt.getUTCDate() + ' ' + MONTHS[dt.getUTCMonth()] + '</span><span class="tc">' + countDay(i) + '/9</span></button>';
+    }).join('');
+  }
+  function updateCounts() {
+    var tcs = document.querySelectorAll('#tabs .tc');
+    for (var i = 0; i < tcs.length; i++) tcs[i].textContent = countDay(i) + '/9';
+    PLATS.forEach(function (p) {
+      var c = 0;
+      for (var n = 1; n <= 3; n++) if (filled(keyOf(selDay, p.k, n))) c++;
+      var node = document.querySelector('.pc[data-p="' + p.k + '"]');
+      if (node) node.textContent = c + '/3 planned';
+    });
+  }
+  function renderDay() {
+    var i = selDay, d = DAYS[i], dt = dayDate(i);
+    var y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, dd = dt.getUTCDate();
+    var html = '<div class="day-head"><h3>' + d.name + '</h3><span class="date">' + dd + ' ' + MONTHS[m - 1] + '</span>' + (i === todayIdx ? '<span class="tag">Today</span>' : '') + '</div>';
+    html += '<div class="plats">' + PLATS.map(function (p) {
+      return '<article class="plat ' + p.k + '"><div class="plat-h"><i></i><h4>' + p.name + '</h4><span class="pc" data-p="' + p.k + '"></span></div>' +
+        p.posts.map(function (h, n) {
+          var after = h < 5;
+          var ts = zonedToUtc(y, m, dd + (after ? 1 : 0), h, 0, RO);
+          var chips = REG.slice(1).map(function (r) {
+            var st = status(localHour(ts, r.zone));
+            return '<span class="chip s-' + st.c + '" title="' + r.label + ' ' + fmtTime(ts, r.zone) + ', ' + st.t + '" aria-label="' + r.label + ' ' + fmtTime(ts, r.zone) + ', ' + st.t + '">' + r.short + ' ' + fmtHour(ts, r.zone) + '</span>';
+          }).join('');
+          var key = keyOf(i, p.k, n + 1);
+          return '<div class="pr"><div class="pr-top"><div class="pr-time">' + fmtTime(ts, RO) + '<small>Post ' + (n + 1) + (after ? ' · after midnight' : '') + '</small></div>' +
+            '<div class="chips">' + chips + '</div></div>' +
+            '<label class="sr" for="n-' + key + '">Video for ' + p.name + ' post ' + (n + 1) + '</label>' +
+            '<textarea id="n-' + key + '" data-key="' + key + '" rows="2" placeholder="Which video goes out here?"></textarea></div>';
+        }).join('') + '</article>';
+    }).join('') + '</div>';
+    el('day').innerHTML = html;
+    applyNotes();
+  }
+  function applyNotes() {
+    var tas = document.querySelectorAll('#day textarea');
+    for (var i = 0; i < tas.length; i++) {
+      var t = tas[i];
+      if (document.activeElement === t) continue;
+      var v = notes[t.getAttribute('data-key')] || '';
+      if (t.value !== v) t.value = v;
+    }
+    updateCounts();
+  }
+  el('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-i]');
+    if (!b) return;
+    selDay = +b.getAttribute('data-i');
+    var all = el('tabs').querySelectorAll('.tab');
+    for (var i = 0; i < all.length; i++) all[i].setAttribute('aria-pressed', i === selDay ? 'true' : 'false');
+    renderDay();
+  });
+
+  /* ---------- saving ---------- */
+  var db = null, latest = {}, timers = {}, busy = {}, again = {};
+  function setSync(t) { el('sync').textContent = t; }
+  function flush(key) {
+    if (busy[key]) { again[key] = true; return; }
+    busy[key] = true;
+    var text = latest[key] || '';
+    var job;
+    try {
+      if (db) {
+        var ref = db.doc('notes/' + key);
+        job = text.trim() === '' ? ref.delete() : ref.set({ text: text });
+      } else {
+        localStorage.setItem('gps-notes', JSON.stringify(notes));
+        job = Promise.resolve();
+      }
+    } catch (x) { job = Promise.reject(x); }
+    job.then(function () { setSync('Saved'); }, function (e) {
+      setSync(e && e.code === 'quota_exceeded' ? 'Storage is full. Delete some notes.' : 'Could not save. Check your connection and edit the note again.');
+    }).then(function () {
+      busy[key] = false;
+      if (again[key]) { again[key] = false; flush(key); }
+    });
+  }
+  el('day').addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'TEXTAREA') return;
+    var key = t.getAttribute('data-key');
+    notes[key] = t.value;
+    latest[key] = t.value;
+    updateCounts();
+    setSync('Saving...');
+    clearTimeout(timers[key]);
+    timers[key] = setTimeout(function () { timers[key] = null; flush(key); }, 700);
+  });
+
+  renderTabs();
+  renderDay();
+
+  (function initStore() {
+    var local = {};
+    try { local = JSON.parse(localStorage.getItem('gps-notes') || '{}') || {}; } catch (x) {}
+    var usePromise;
+    try { usePromise = window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null); }
+    catch (x) { usePromise = Promise.resolve(null); }
+    usePromise.then(function (store) { return store; }, function () { return null; }).then(function (store) {
+      if (!store) {
+        notes = local;
+        setSync('Notes are saved on this device only.');
+        applyNotes();
+        return;
+      }
+      db = store;
+      db.collection('notes').onSnapshot(function (snap) {
+        var n = {};
+        snap.docs.forEach(function (d) {
+          var v = d.data();
+          n[d.id] = v && typeof v.text === 'string' ? v.text : '';
+        });
+        Object.keys(latest).forEach(function (k) {
+          if (timers[k] || busy[k]) n[k] = notes[k];
+        });
+        notes = n;
+        applyNotes();
+      }, function () {
+        setSync('Live sync stopped. Reload the page to reconnect.');
+      });
+    });
+  })();
+})();
+</script>
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  var open = false;
+  try { if (localStorage.getItem('gps-twitch') === 'open') open = true; } catch (x) {}
+  function setOpen(v, remember) {
+    open = v;
+    $('tw-body').hidden = !v;
+    var b = $('tw-toggle');
+    b.textContent = v ? 'Hide' : 'Show';
+    b.setAttribute('aria-expanded', v ? 'true' : 'false');
+    if (remember) { try { localStorage.setItem('gps-twitch', v ? 'open' : 'hidden'); } catch (x) {} }
+  }
+  $('tw-toggle').addEventListener('click', function () { setOpen(!open, true); });
+  setOpen(open, false);
+
+  var data = null;
+  function ago(iso) {
+    var t = Date.parse(iso);
+    if (isNaN(t)) return '';
+    var m = Math.max(0, Math.round((Date.now() - t) / 60000));
+    if (m < 1) return 'just now';
+    if (m < 60) return m + ' min ago';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + ' h ago';
+    return Math.floor(h / 24) + ' d ago';
+  }
+  function stamp(extra) {
+    var s = 'No list yet.';
+    if (data && data.fetchedAt) {
+      var t = Date.parse(data.fetchedAt);
+      if (!isNaN(t)) {
+        s = 'Updated ' + new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Bucharest', hour: 'numeric', minute: '2-digit' }).format(t) + ' Romania time, ' + ago(data.fetchedAt);
+      }
+    }
+    $('tw-stamp').textContent = extra ? s + ' · ' + extra : s;
+  }
+  function render() {
+    var games = data && Array.isArray(data.games) ? data.games.filter(function (g) { return g && typeof g.name === 'string' && typeof g.viewers === 'number'; }).slice(0, 10) : [];
+    var nf = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 0 });
+    var max = games.reduce(function (m, g) { return Math.max(m, g.viewers); }, 1);
+    $('tw-best').textContent = games.length ? 'Best right now: ' + games[0].name : '';
+    $('tw-list').innerHTML = games.map(function (g, i) {
+      return '<li class="tw-item"><span class="tw-rank">' + (i + 1) + '</span><span class="tw-name">' + esc(g.name) + '</span><span class="tw-v">' + nf.format(g.viewers) + '</span>' +
+        '<span class="tw-bar" aria-hidden="true"><i style="width:' + Math.max(2, Math.round(g.viewers / max * 100)) + '%"></i></span></li>';
+    }).join('');
+    stamp('');
+  }
+
+  var ref = null;
+  $('tw-refresh').addEventListener('click', function () {
+    if (!ref) { stamp('Live list unavailable in this view.'); return; }
+    var btn = $('tw-refresh');
+    btn.disabled = true;
+    btn.textContent = 'Checking...';
+    ref.get().then(function (snap) {
+      if (snap.exists) data = snap.data();
+      render();
+      stamp('checked just now');
+    }, function () {
+      stamp('Could not check. Try again.');
+    }).then(function () {
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+    });
+  });
+  setInterval(function () { if (data && open) stamp(''); }, 60000);
+
+  var p;
+  try { p = window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null); } catch (x) { p = Promise.resolve(null); }
+  p.then(function (s) { return s; }, function () { return null; }).then(function (db) {
+    if (!db) { $('tw-stamp').textContent = 'Live list unavailable in this view.'; return; }
+    ref = db.doc('twitch/top');
+    ref.onSnapshot(function (snap) {
+      if (snap.exists) data = snap.data();
+      render();
+    }, function () {
+      $('tw-stamp').textContent = 'Live updates stopped. Reload the page to reconnect.';
+    });
+  });
+})();
+</script>
+
+</body></html>
+
